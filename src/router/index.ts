@@ -161,24 +161,6 @@ import Home from "../views/home.vue";
 //         component: () => import(/* webpackChunkName: "403" */ '../views/403.vue'),
 //     },
 // ];
-interface DirConfig {
-  dir: string;
-  baseRoute: string;
-}
-
-const dirsConfig: DirConfig[] = [
-  {
-    dir: "src/views",
-    baseRoute: "",
-  },
-  {
-    dir: "src/views/home",
-    baseRoute: "home",
-  },
-];
-dirsConfig.forEach((config) => {
-    
-});
 
 const pages: Record<string, RouteMeta> = import.meta.glob(
   "../views/**/page.ts",
@@ -207,10 +189,23 @@ const routes: RouteRecordRaw[] = Object.entries(pages).map(([path, config]) => {
   };
 });
 console.log(routes);
+
 // const router = createRouter({
 //   history: createWebHistory(import.meta.env.BASE_URL),
 //   routes: routes,
 // });
+
+function createChildrenRouter(routes: RouteRecordRaw[]): RouteRecordRaw[] {
+  let arr: RouteRecordRaw[] = [];
+  for (let i = 0; i < routes.length; i++) {
+    let item = routes[i];
+    let pathArr = item.path.split("/").filter(Boolean);
+    console.log(pathArr);
+  }
+  return arr;
+}
+
+createChildrenRouter(routes);
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
