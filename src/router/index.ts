@@ -1,11 +1,10 @@
 import {
   createRouter,
   createWebHashHistory,
-  RouteMeta,
-  RouteRecordRaw,
+  type RouteMeta,
+  type RouteRecordRaw,
 } from "vue-router";
 import { usePermissStore } from "../store/permiss";
-import Home from "../views/home.vue";
 
 // const routes: RouteRecordRaw[] = [
 //     {
@@ -172,21 +171,29 @@ const pages: Record<string, RouteMeta> = import.meta.glob(
 
 const pageComps = import.meta.glob("../views/**/index.vue");
 console.log(pages);
-const routes: RouteRecordRaw[] = Object.entries(pages).map(([path, config]) => {
+let routes: RouteRecordRaw[] = Object.entries(pages).map(([path, config]) => {
   let pageJsPath = path;
   path = path.replace("../views", "").replace("/page.ts", "");
   path = path || "/";
-  const name = path.split("/").filter(Boolean).join("-");
-
+  const nameArr = path.split("/").filter(Boolean);
+  const name = nameArr[nameArr.length - 1];
   const compPath = pageJsPath.replace("page.ts", "index.vue");
 
-  console.log(compPath);
-  return {
-    path,
-    name,
-    component: pageComps[compPath],
-    meta: config,
-  };
+  let redirect = config.redirect as string | undefined;
+  return Object.assign(
+    {
+      path: (config?.path as string) || path,
+      name,
+      component: pageComps[compPath],
+      meta: config,
+    },
+    redirect
+      ? {
+          redirect,
+          children: [],
+        }
+      : {}
+  );
 });
 console.log(routes);
 
@@ -195,23 +202,85 @@ console.log(routes);
 //   routes: routes,
 // });
 
+/**
+ *
+ * @param routes 一级路由
+ * @returns 多级路由
+ */
 function createChildrenRouter(routes: RouteRecordRaw[]): RouteRecordRaw[] {
-  let arr: RouteRecordRaw[] = [];
+  routes = routes.sort((a, b) => {
+    return (
+      a.path.split("/").filter(Boolean).length -
+      b.path.split("/").filter(Boolean).length
+    );
+  });
+  let realRoutes: RouteRecordRaw[] = [];
   for (let i = 0; i < routes.length; i++) {
     let item = routes[i];
     let pathArr = item.path.split("/").filter(Boolean);
-    console.log(pathArr);
+    // 一级路由原来已经有了 无须处理
+    if (pathArr.length < 2) {
+      realRoutes.push(item);
+    } else {
+      // 将当前路由移入上一级路由下的children
+      realRoutes = moveRoute(realRoutes, item);
+    }
   }
-  return arr;
+  return realRoutes;
 }
 
-createChildrenRouter(routes);
+/**
+ *
+ * @param arr 多级路由
+ * @param route 路由
+ */
+function moveRoute(routes: RouteRecordRaw[], route: RouteRecordRaw) {
+  let pathArr = route.path.split("/").filter(Boolean);
+  // routes = findRoute(pathArr, routes, route);
+  let copyRoutes = [...routes];
+  let parent = [...copyRoutes];
+  for (let i = 0; i < pathArr.length; i++) {
+    let path = pathArr[i];
+    if (i === pathArr.length - 1) {
+      parent.push(handleRoute(route));
+      break;
+    } else {
+      for (let j = 0; j < parent.length; j++) {
+        if (path === parent[j].path.replace("/", "")) {
+          if (!parent[j].children) {
+            parent[j].children = [];
+          }
+          parent = parent[j].children as RouteRecordRaw[];
+          break;
+        }
+      }
+    }
+  }
+  console.log(copyRoutes);
+  return copyRoutes;
+}
+
+function handleRoute(route: RouteRecordRaw) {
+  let { path } = route;
+  let pathArr = path.split("/").filter(Boolean);
+
+  return {
+    ...route,
+    path: pathArr[pathArr.length - 1],
+  };
+}
+routes = createChildrenRouter(routes);
+routes.unshift({
+  path: "/",
+  redirect: "/home/dashboard",
+});
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
 });
 
 router.beforeEach((to, from, next) => {
+  console.log(to);
   document.title = `${to.meta.title} | vue-manage-system`;
   const role = localStorage.getItem("ms_username");
   const permiss = usePermissStore();

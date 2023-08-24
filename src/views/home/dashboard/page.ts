@@ -1,4 +1,4 @@
 export default {
-    title: "404",
+    title: "系统首页",
   };
   
