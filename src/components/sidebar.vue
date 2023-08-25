@@ -94,10 +94,6 @@ const items = [
                 title: '基本表单',
             },
             {
-                index: '/upload',
-                title: '文件上传',
-            },
-            {
                 index: '4',
                 title: '三级菜单',
                 subs: [
@@ -122,16 +118,6 @@ const items = [
         icon: 'PieChart',
         index: '/charts',
         title: 'schart图表',
-    },
-    {
-        icon: 'Warning',
-        index: '/permission',
-        title: '权限管理',
-    },
-    {
-        icon: 'CoffeeCup',
-        index: '/donate',
-        title: '支持作者',
     },
 ];
 
