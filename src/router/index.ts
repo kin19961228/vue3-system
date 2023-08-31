@@ -236,15 +236,17 @@ function createChildrenRouter(routes: RouteRecordRaw[]): RouteRecordRaw[] {
  */
 function moveRoute(routes: RouteRecordRaw[], route: RouteRecordRaw) {
   let pathArr = route.path.split("/").filter(Boolean);
-  // routes = findRoute(pathArr, routes, route);
   let copyRoutes = [...routes];
   let parent = [...copyRoutes];
+
   for (let i = 0; i < pathArr.length; i++) {
     let path = pathArr[i];
+    // 若已经是最后一个路径 直接将路由放入
     if (i === pathArr.length - 1) {
       parent.push(handleRoute(route));
       break;
     } else {
+      // 寻找该路由的父节点
       for (let j = 0; j < parent.length; j++) {
         if (path === parent[j].path.replace("/", "")) {
           if (!parent[j].children) {
@@ -256,14 +258,13 @@ function moveRoute(routes: RouteRecordRaw[], route: RouteRecordRaw) {
       }
     }
   }
-  console.log(copyRoutes);
   return copyRoutes;
 }
 
 function handleRoute(route: RouteRecordRaw) {
   let { path } = route;
-  let pathArr = path.split("/").filter(Boolean);
 
+  let pathArr = path.split("/").filter(Boolean);
   return {
     ...route,
     path: pathArr[pathArr.length - 1],
